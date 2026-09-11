@@ -1,5 +1,7 @@
 # 独立 VPS 部署与手动运维
 
+**方案更新：现改为宿主机Nginx + Docker WordPress/MySQL。请以 nginx-vps.md 为实际操作指南。以下Caddy相关段落是历史记录，不再适用于当前compose.yaml。**
+
 本说明取代早期 GoDaddy 托管主机安装方案。生产仅常驻 Caddy、WordPress（Apache/PHP）、MySQL；CLI/archive 仅由手动命令短暂创建，结束自动移除。没有定时备份任务、常驻备份服务或 prepare 容器。
 
 ## 1. 代码、内容和秘密分离

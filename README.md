@@ -2,7 +2,7 @@
 
 阶段：WordPress 本地可操作版本完成，尚未生产部署。
 
-VPS 交付入口：docs/vps-deployment.md。纯代码构建 `npm run build`；无图发布产物 `npm run release`；仓库候选审计 `node tools/repository-audit.mjs`。私有素材、密码与数据不会进入该发布产物。生产仅常驻 Caddy / WordPress / MySQL，初始化、备份和恢复由手动脚本按需执行。
+VPS 交付入口：docs/nginx-vps.md。纯代码构建 `npm run build`；无图发布产物 `npm run release`；仓库候选审计 `node tools/repository-audit.mjs`。生产Docker仅常驻WordPress/MySQL，入口由宿主机Nginx负责，初始化/备份/恢复手动执行。Nginx模板在deploy/nginx，`node tools/nginx-config.mjs 域名 8080`生成可复制配置。`node tools/backup-local.mjs`导出被Git忽略的本地内容迁移包。
 
 Docker 测试环境现已配置：地址 http://127.0.0.1:9401/，启动/停止说明见 docs/docker.md，本地测试账号见 work/docker-login.json。它与下方 9400 Playground 环境的数据独立。
 

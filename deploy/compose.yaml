@@ -6,33 +6,16 @@ x-wp-env: &wp-env
   WORDPRESS_CONFIG_EXTRA: |
     define('DISALLOW_FILE_EDIT', true);
     define('WP_AUTO_UPDATE_CORE', 'minor');
-x-code: &code
-  - site:/var/www/html
-  - ${RELEASE_DIR:?Set RELEASE_DIR}/plugins/art-alexis:/var/www/html/wp-content/plugins/art-alexis:ro
-  - ${RELEASE_DIR:?Set RELEASE_DIR}/themes/art-alexis:/var/www/html/wp-content/themes/art-alexis:ro
+x-logging: &logging
+  driver: json-file
+  options: {max-size: 10m, max-file: '3'}
 services:
-  caddy:
-    image: ${CADDY_IMAGE:-caddy:2}
-    restart: unless-stopped
-    ports:
-      - '${HTTP_BIND:-0.0.0.0:80}:80'
-      - '${HTTPS_BIND:-0.0.0.0:443}:443'
-    environment:
-      SITE_ADDRESS: ${SITE_ADDRESS:?Set SITE_ADDRESS}
-      ACME_EMAIL: ${ACME_EMAIL:?Set ACME_EMAIL}
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - certificates:/data
-      - caddy_config:/config
-    depends_on:
-      wordpress: {condition: service_healthy}
-    logging: &logging
-      driver: json-file
-      options: {max-size: 10m, max-file: '3'}
   wordpress:
     image: ${WORDPRESS_IMAGE:-wordpress:7.1.0-php8.3-apache}
     restart: unless-stopped
     environment: *wp-env
+    ports:
+      - '127.0.0.1:${BACKEND_PORT:-8080}:80'
     secrets: [db_password]
     volumes:
       - site:/var/www/html
@@ -83,6 +66,9 @@ services:
       - ${RELEASE_DIR:?Set RELEASE_DIR}/themes/art-alexis:/var/www/html/wp-content/themes/art-alexis:ro
       - ./install.sh:/aa-install.sh:ro
       - ./initialize.php:/aa-initialize.php:ro
+      - ./finalize-content.sh:/aa-finalize-content.sh:ro
+      - ./import-users.php:/aa-import-users.php:ro
+      - ${BACKUP_DIR:-./backups}:/content-backup:ro
   archive:
     image: ${CLI_IMAGE:-wordpress:cli-php8.3}
     user: '0:0'
@@ -94,8 +80,6 @@ services:
 volumes:
   site:
   database:
-  certificates:
-  caddy_config:
 secrets:
   db_password: {file: ./secrets/db-password.txt}
   db_root_password: {file: ./secrets/db-root-password.txt}

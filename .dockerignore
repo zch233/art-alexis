@@ -17,3 +17,7 @@ deploy/secrets
 deploy/backups
 deploy/private
 outputs
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
