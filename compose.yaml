@@ -1,0 +1,50 @@
+name: art-alexis-test
+services:
+  db:
+    image: mysql:8.0
+    env_file: ./work/docker.env
+    volumes:
+      - database:/var/lib/mysql
+    healthcheck:
+      test: [CMD-SHELL, 'mysqladmin ping -h localhost -uroot -p"$$MYSQL_ROOT_PASSWORD" --silent']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    restart: unless-stopped
+  wordpress:
+    image: wordpress:cli-php8.3
+    user: '33:33'
+    entrypoint: [php, -S, '0.0.0.0:8080', -t, /var/www/html, /aa-router.php]
+    environment:
+      PHP_CLI_SERVER_WORKERS: '4'
+    env_file: ./work/docker.env
+    ports:
+      - '127.0.0.1:9401:8080'
+    volumes:
+      - site:/var/www/html
+      - ./wordpress/plugins/art-alexis:/var/www/html/wp-content/plugins/art-alexis:ro
+      - ./wordpress/themes/art-alexis:/var/www/html/wp-content/themes/art-alexis:ro
+      - ./tools/docker-uploads.ini:/usr/local/etc/php/conf.d/art-alexis.ini:ro
+      - ./tools/docker-router.php:/aa-router.php:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+  cli:
+    image: wordpress:cli-php8.3
+    user: '33:33'
+    env_file: ./work/docker.env
+    volumes:
+      - site:/var/www/html
+      - ./wordpress/plugins/art-alexis:/var/www/html/wp-content/plugins/art-alexis:ro
+      - ./wordpress/themes/art-alexis:/var/www/html/wp-content/themes/art-alexis:ro
+      - ./tools/docker-init.php:/aa-init.php:ro
+      - ./tools/docker-bootstrap.sh:/aa-bootstrap.sh:ro
+      - ./tools/docker-prepare.sh:/aa-prepare.sh:ro
+    profiles: [tools]
+    depends_on:
+      db:
+        condition: service_healthy
+volumes:
+  database:
+  site:

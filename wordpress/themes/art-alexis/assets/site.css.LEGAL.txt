@@ -1,0 +1,4 @@
+Bundled license information:
+
+photoswipe/dist/photoswipe.css:
+  /*! PhotoSwipe main CSS by Dmytro Semenov | photoswipe.com */

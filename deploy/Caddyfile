@@ -1,0 +1,18 @@
+{
+    email {$ACME_EMAIL}
+    admin off
+}
+{$SITE_ADDRESS} {
+    encode zstd gzip
+    request_body {
+        max_size 20MB
+    }
+    @private path /wp-config.php /readme.html /license.txt /xmlrpc.php /.git/* /.env /wp-content/debug.log
+    respond @private 404
+    header {
+        X-Content-Type-Options nosniff
+        Referrer-Policy strict-origin-when-cross-origin
+        -Server
+    }
+    reverse_proxy wordpress:80
+}

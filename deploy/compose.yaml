@@ -1,0 +1,103 @@
+x-wp-env: &wp-env
+  WORDPRESS_DB_HOST: db:3306
+  WORDPRESS_DB_NAME: art_alexis
+  WORDPRESS_DB_USER: alexis
+  WORDPRESS_DB_PASSWORD_FILE: /run/secrets/db_password
+  WORDPRESS_CONFIG_EXTRA: |
+    define('DISALLOW_FILE_EDIT', true);
+    define('WP_AUTO_UPDATE_CORE', 'minor');
+x-code: &code
+  - site:/var/www/html
+  - ${RELEASE_DIR:?Set RELEASE_DIR}/plugins/art-alexis:/var/www/html/wp-content/plugins/art-alexis:ro
+  - ${RELEASE_DIR:?Set RELEASE_DIR}/themes/art-alexis:/var/www/html/wp-content/themes/art-alexis:ro
+services:
+  caddy:
+    image: ${CADDY_IMAGE:-caddy:2}
+    restart: unless-stopped
+    ports:
+      - '${HTTP_BIND:-0.0.0.0:80}:80'
+      - '${HTTPS_BIND:-0.0.0.0:443}:443'
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:?Set SITE_ADDRESS}
+      ACME_EMAIL: ${ACME_EMAIL:?Set ACME_EMAIL}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - certificates:/data
+      - caddy_config:/config
+    depends_on:
+      wordpress: {condition: service_healthy}
+    logging: &logging
+      driver: json-file
+      options: {max-size: 10m, max-file: '3'}
+  wordpress:
+    image: ${WORDPRESS_IMAGE:-wordpress:7.1.0-php8.3-apache}
+    restart: unless-stopped
+    environment: *wp-env
+    secrets: [db_password]
+    volumes:
+      - site:/var/www/html
+      - ${RELEASE_DIR:?Set RELEASE_DIR}/plugins/art-alexis:/var/www/html/wp-content/plugins/art-alexis:ro
+      - ${RELEASE_DIR:?Set RELEASE_DIR}/themes/art-alexis:/var/www/html/wp-content/themes/art-alexis:ro
+      - ./uploads.ini:/usr/local/etc/php/conf.d/art-alexis.ini:ro
+      - ./apache-hardening.conf:/etc/apache2/conf-enabled/art-alexis.conf:ro
+    depends_on:
+      db: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, php, -r, 'exit(is_file("/var/www/html/wp-config.php") && @fsockopen("127.0.0.1", 80) ? 0 : 1);']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+    logging: *logging
+  db:
+    image: ${MYSQL_IMAGE:-mysql:8.0}
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: art_alexis
+      MYSQL_USER: alexis
+      MYSQL_PASSWORD_FILE: /run/secrets/db_password
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+    secrets: [db_password, db_root_password]
+    volumes: [database:/var/lib/mysql]
+    healthcheck:
+      test: [CMD-SHELL, 'MYSQL_PWD="$$(cat /run/secrets/db_root_password)" mysql -uroot -Nse "SELECT 1" >/dev/null']
+      interval: 5s
+      timeout: 5s
+      retries: 40
+    logging: *logging
+  cli:
+    image: ${CLI_IMAGE:-wordpress:cli-php8.3}
+    user: '33:33'
+    profiles: [tools]
+    environment:
+      <<: *wp-env
+      SITE_URL: ${SITE_URL:?Set SITE_URL}
+      ADMIN_LOGIN: ${ADMIN_LOGIN:-siteadmin}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?Set ADMIN_EMAIL}
+      EDITOR_EMAIL: ${EDITOR_EMAIL:?Set EDITOR_EMAIL}
+      WP_CLI_CACHE_DIR: /tmp/wp-cli-cache
+    secrets: [db_password, admin_password, editor_password]
+    volumes:
+      - site:/var/www/html
+      - ${RELEASE_DIR:?Set RELEASE_DIR}/plugins/art-alexis:/var/www/html/wp-content/plugins/art-alexis:ro
+      - ${RELEASE_DIR:?Set RELEASE_DIR}/themes/art-alexis:/var/www/html/wp-content/themes/art-alexis:ro
+      - ./install.sh:/aa-install.sh:ro
+      - ./initialize.php:/aa-initialize.php:ro
+  archive:
+    image: ${CLI_IMAGE:-wordpress:cli-php8.3}
+    user: '0:0'
+    profiles: [tools]
+    entrypoint: [sh]
+    volumes:
+      - site:/var/www/html
+      - ${BACKUP_DIR:-./backups}:/backup
+volumes:
+  site:
+  database:
+  certificates:
+  caddy_config:
+secrets:
+  db_password: {file: ./secrets/db-password.txt}
+  db_root_password: {file: ./secrets/db-root-password.txt}
+  admin_password: {file: ./secrets/admin-password.txt}
+  editor_password: {file: ./secrets/editor-password.txt}

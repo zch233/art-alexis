@@ -1,0 +1,12 @@
+{
+  "name": "art-alexis",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "dev:wp": "node tools/local.mjs",
+    "release": "node tools/release.mjs"
+  },
+  "dependencies": {"gsap":"^3.13.0", "lenis":"^1.3.4", "photoswipe":"^5.4.4"},
+  "devDependencies": {"esbuild":"^0.25.0", "@wp-playground/cli":"latest"}
+}
