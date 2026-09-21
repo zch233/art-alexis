@@ -1,0 +1,18 @@
+/* work-detail.html's lightbox appearance; PhotoSwipe retains swipe/pinch/focus. */
+.source-lightbox .pswp__top-bar{height:0}
+.source-lightbox .pswp__button--close{position:absolute;top:26px;right:30px;width:44px;height:44px;margin:0;background:transparent;opacity:1;transition:transform .3s ease,opacity .3s ease}
+.source-lightbox .pswp__button--close:hover{transform:rotate(90deg);opacity:.65}
+.source-lightbox .pswp__button--close .pswp__icn{width:26px;height:26px;left:9px;top:9px;filter:none}
+.source-lightbox .pswp__img{border:1px solid #fcfbfa4d}
+.source-lightbox .pswp__caption{left:30px;right:auto;bottom:28px;max-height:none;overflow:visible;text-align:left;font:400 12px/normal Poppins,sans-serif;letter-spacing:.16em;text-transform:uppercase;opacity:.65;pointer-events:none}
+.source-lightbox.has-info .pswp__caption{left:0;right:0;bottom:30px;padding:0 90px;opacity:1;text-align:center;letter-spacing:normal;text-transform:none}
+.source-lightbox .lightbox-info-title{font:600 18px/normal Poppins,sans-serif;letter-spacing:.04em}
+.source-lightbox .lightbox-info-desc{margin:9px auto 0;max-width:560px;font:400 12px/1.6 Poppins,sans-serif;letter-spacing:.14em;text-transform:uppercase;opacity:.62}
+.source-lightbox .lightbox-counter{margin-top:12px;font:400 12px/normal Poppins,sans-serif;letter-spacing:.22em;opacity:.5}
+.source-lightbox:not(.has-info) .pswp__button--arrow{display:none}
+.source-lightbox .pswp__button--arrow{top:50%;margin:0;transform:translateY(-50%);width:52px;height:52px;border:1px solid #fcfbfa;background:#190e3099;opacity:1;transition:background-color .3s ease}
+.source-lightbox .pswp__button--arrow:hover{background:#2e1b57}
+.source-lightbox .pswp__button--arrow--prev{left:28px}.source-lightbox .pswp__button--arrow--next{right:28px}
+.source-lightbox .pswp__button--arrow .pswp__icn{width:20px;height:20px;left:15px;right:auto;top:15px;margin:0;filter:none;transform:none}
+.source-lightbox .pswp__icn{fill:none;color:#fcfbfa}.source-lightbox .pswp__button--arrow{visibility:visible}
+@media(max-width:600px){.source-lightbox.has-info .pswp__caption{padding:0 22px;bottom:18px}.source-lightbox .pswp__button--arrow{width:42px;height:42px}.source-lightbox .pswp__button--arrow--prev{left:14px}.source-lightbox .pswp__button--arrow--next{right:14px}.source-lightbox .pswp__button--arrow .pswp__icn{left:10px;top:10px}}

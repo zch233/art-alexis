@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Art Alexis — 作品管理
  * Description: 分类、作品、媒体引用保护和精简运营后台。
- * Version: 1.0.0
+ * Version: 1.1.0
  * Requires at least: 6.5
  * Requires PHP: 8.1
  */

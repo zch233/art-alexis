@@ -1,0 +1,28 @@
+/* Two fixed-color surfaces reproduce the authored purple ramp via compositing. */
+.surface-depth{position:fixed;inset:0;background:#140c26;opacity:0;pointer-events:none;z-index:0}
+.site-header,.detail-header{isolation:isolate}.header-depth{position:absolute;z-index:-1}
+.site-header .navbar-container,.detail-header-inner{position:relative}
+.contact-note{padding:0 40px 30px;font-size:14px;opacity:.7}
+.footer-signature{position:relative;z-index:2}
+.contact-pending{cursor:default}.footer-container{transition:background-color .35s ease}
+.footer-container:hover{background-color:#2e1b57}.contact:hover{background:transparent}
+.header-contact-placeholder{visibility:visible}
+.hero{cursor:pointer}.hero-scroll{cursor:pointer}
+/* Preserve the explicitly requested source hover geometry (short, user-triggered). */
+.header-contact{transition:padding .2s}.header-contact:hover{padding-inline:30px;background:transparent}
+.collection-card{overflow:hidden;transition:background-color .2s,padding .25s}
+.collection-card:hover{background:#2e1b57;padding:20px}
+.collection-card:hover .crop>img{transform:none}
+.contact{transition:padding .2s}.contact:hover{padding-inline:50px}
+@keyframes source-line-left{from{transform:translateX(-100%)}to{transform:translateX(0)}}
+@keyframes source-line-right{from{transform:translateX(100%)}to{transform:translateX(0)}}
+@keyframes source-fade{from{opacity:0}to{opacity:1}}
+@media(prefers-reduced-motion:no-preference){
+ .aa-motion-ready .hero{opacity:0}
+ .aa-motion-ready .home .site-header{transform:translateY(-100%)}
+ .intro-playing .hero-grid::before{animation:source-line-left .5s ease both}
+ .intro-playing .hero-title::after{animation:source-line-right .5s ease .1s both}
+ .intro-playing .hero-grid::after{animation:source-line-left .5s ease .2s both}
+ .intro-playing .hero-shell::before{animation:source-fade .5s ease .6s both}
+ .intro-playing .hero-shell::after{animation:source-fade .5s ease .7s both}
+}

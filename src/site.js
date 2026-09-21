@@ -5,32 +5,48 @@ import PhotoSwipeLightbox from 'photoswipe/lightbox';
 import PhotoSwipe from 'photoswipe';
 import 'photoswipe/style.css';
 import 'lenis/dist/lenis.css';
-import './site.css';
+import './source-parity.css';
+import './detail.css';
+import {sourceMotion} from './source-motion';
+import './source-lightbox.css';
 
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+document.documentElement.classList.add('aa-js');
 const menu = document.querySelector('.menu');
 const navigation = document.querySelector('#navigation');
-const closeMenu = () => {navigation?.classList.remove('open');menu?.setAttribute('aria-expanded','false');if(menu)menu.textContent='Menu';};
-menu?.addEventListener('click',()=>{const open=menu.getAttribute('aria-expanded')!=='true';navigation.classList.toggle('open',open);menu.setAttribute('aria-expanded',String(open));menu.textContent=open?'Close':'Menu';});
+const closeMenu = () => {navigation?.classList.remove('open');menu?.setAttribute('aria-expanded','false');menu?.setAttribute('aria-label','Menu');};
+menu?.addEventListener('click',()=>{const open=menu.getAttribute('aria-expanded')!=='true';navigation.classList.toggle('open',open);menu.setAttribute('aria-expanded',String(open));menu.setAttribute('aria-label',open?'Close menu':'Menu');});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&menu?.getAttribute('aria-expanded')==='true'){closeMenu();menu.focus();}});
 navigation?.addEventListener('click',e=>{if(e.target.closest('a'))closeMenu();});
+matchMedia('(min-width:768px)').addEventListener('change',closeMenu);
 
 let lenis;
 gsap.registerPlugin(ScrollTrigger);
 const mm=gsap.matchMedia();
 mm.add('(prefers-reduced-motion: no-preference)',()=>{
-  const intro=gsap.timeline({defaults:{duration:.65,ease:'power3.out'}});
-  intro.from('.hero-title h1, .section-heading h1, .detail-info h1',{y:24,autoAlpha:0,clearProps:'all'});
-  document.querySelectorAll('.collection-card').forEach(card=>gsap.from(card,{y:24,opacity:0,duration:.55,clearProps:'all',scrollTrigger:{trigger:card,start:'top 94%',once:true}}));
-  if(matchMedia('(pointer:fine)').matches){
-    lenis=new Lenis({lerp:.12,anchors:true,autoRaf:false});
+  const clearReveals=sourceMotion();
+  if(document.querySelector('.hero')&&matchMedia('(pointer:fine)').matches){
+    lenis=new Lenis({lerp:.1,anchors:true,autoRaf:false});
     const tick=time=>lenis?.raf(time*1000);gsap.ticker.add(tick);lenis.on('scroll',ScrollTrigger.update);
     const visibility=()=>document.hidden?lenis?.stop():lenis?.start();document.addEventListener('visibilitychange',visibility);
-    return()=>{gsap.ticker.remove(tick);document.removeEventListener('visibilitychange',visibility);lenis?.destroy();lenis=null;};
+    return()=>{clearReveals();gsap.ticker.remove(tick);document.removeEventListener('visibilitychange',visibility);lenis?.destroy();lenis=null;};
   }
+  return clearReveals;
 });
 
-const lightbox=new PhotoSwipeLightbox({gallery:'#art-gallery',children:'a.image-button',pswpModule:PhotoSwipe,showHideAnimationType:reduced.matches?'none':'fade',bgOpacity:1,loop:false,returnFocus:true,initialZoomLevel:'fit',secondaryZoomLevel:2,maxZoomLevel:4,closeTitle:'Close',zoomTitle:'Zoom',arrowPrevTitle:'Previous image',arrowNextTitle:'Next image'});
+// Keep the client's original line paths, not PhotoSwipe's filled toolbar icons.
+const sourceIcon=(path,width=1.8)=>`<svg class="pswp__icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${path}"/></svg>`;
+const lightbox=new PhotoSwipeLightbox({gallery:'#art-gallery',children:'a.image-button',pswpModule:PhotoSwipe,mainClass:'source-lightbox',showHideAnimationType:'none',bgOpacity:.95,loop:true,returnFocus:true,zoom:false,counter:false,closeSVG:sourceIcon('M5 5 L19 19 M19 5 L5 19',1.6),arrowPrevSVG:sourceIcon('M15 5 L8 12 L15 19'),arrowNextSVG:sourceIcon('M9 5 L16 12 L9 19'),initialZoomLevel:z=>Math.min(1,z.fit),secondaryZoomLevel:2,maxZoomLevel:4,paddingFn:(viewport,item)=>{const pad=viewport.x<=600?20:48;const extra=item.element?.dataset.grid==='1'?80:0;return{top:pad+extra,bottom:pad+extra,left:pad,right:pad};},closeTitle:'Close image',zoomTitle:'Zoom',arrowPrevTitle:'Previous work',arrowNextTitle:'Next work'});
+lightbox.on('uiRegister',()=>lightbox.pswp.ui.registerElement({name:'caption',order:9,isButton:false,appendTo:'root',onInit:(el,pswp)=>{
+  const update=()=>{
+    const data=pswp.currSlide?.data.element?.dataset||{};const grid=data.grid==='1';pswp.element.classList.toggle('has-info',grid);el.replaceChildren();
+    if(!grid){el.textContent=data.caption||'';return;}
+    const title=document.createElement('div');title.className='lightbox-info-title';title.textContent=data.title||'';
+    const desc=document.createElement('p');desc.className='lightbox-info-desc';desc.textContent=data.description||'';
+    const count=document.createElement('div');count.className='lightbox-counter';count.textContent=`${pswp.currIndex+1} / ${pswp.getNumItems()}`;
+    el.append(title,desc,count);
+  };pswp.on('change',update);update();
+}}));
 lightbox.on('beforeOpen',()=>lenis?.stop());lightbox.on('destroy',()=>lenis?.start());lightbox.init();
 
 const grid=document.querySelector('#work-grid');
@@ -38,21 +54,20 @@ if(grid){
   const button=document.querySelector('#load-more');const status=document.querySelector('#list-status');let page=Number(grid.dataset.page);let pages=Number(grid.dataset.pages);let busy=false;
   const storageKey='aa-list:'+location.pathname;const restoreKey='aa-restore:'+location.pathname;
   const store=()=>{try{sessionStorage.setItem(storageKey,JSON.stringify({page,scroll:scrollY}));}catch{}};
-  function card(item){
-    const a=document.createElement('a');a.className='art-card';a.href=item.url;a.dataset.id=item.id;
-    const crop=document.createElement('div');crop.className='crop';
-    if(item.image){const img=document.createElement('img');img.src=item.image;img.srcset=item.srcset;img.sizes='(max-width:767px) 100vw, 50vw';img.alt=item.alt;img.loading='lazy';img.style.objectPosition=item.focus;crop.append(img)}else{crop.textContent='Image coming soon';}
-    const label=document.createElement('div');label.className='art-label';const title=document.createElement('h2');title.textContent=item.title;const arrow=document.createElement('span');arrow.className='arrow';arrow.textContent='↗';arrow.setAttribute('aria-hidden','true');label.append(title,arrow);a.append(crop,label);return a;
-  }
   async function load(){
     if(busy||page>=pages)return false;busy=true;grid.setAttribute('aria-busy','true');button?.setAttribute('aria-disabled','true');status.textContent='Loading artworks…';
     try{
-      const response=await fetch(`${AA.api}${grid.dataset.collection}/works?page=${page+1}`,{cache:'no-store'});
-      if(!response.ok)throw new Error('Request failed');const data=await response.json();
-      const existing=new Set([...grid.children].map(x=>Number(x.dataset.id)));for(const item of data.items)if(!existing.has(item.id))grid.append(card(item));
-      page=data.page;pages=data.pages;grid.dataset.page=page;
+      const nextURL=new URL(location.href);nextURL.searchParams.set('works_page',page+1);
+      const response=await fetch(nextURL,{cache:'no-store'});
+      if(!response.ok)throw new Error('Request failed');
+      const doc=new DOMParser().parseFromString(await response.text(),'text/html');const incoming=doc.querySelector('#work-grid');
+      if(!incoming||Number(incoming.dataset.page)!==page+1)throw new Error('Unexpected gallery response');
+      const key=e=>`${e.dataset.id}:${e.dataset.imageId||''}`;const existing=new Set([...grid.children].map(key));
+      // Server-rendered same-origin figures keep PHP and appended markup identical.
+      for(const figure of incoming.children){if(figure.tagName!=='FIGURE'||existing.has(key(figure)))continue;figure.querySelectorAll('script,iframe,object,embed').forEach(e=>e.remove());grid.append(document.importNode(figure,true));existing.add(key(figure));}
+      page=Number(incoming.dataset.page);pages=Number(incoming.dataset.pages);grid.dataset.page=page;
       if(button){button.hidden=page>=pages;const url=new URL(location.href);url.searchParams.set('works_page',page+1);button.href=url;}
-      status.textContent=page>=pages?'You’ve seen all the works in this collection.':`${grid.children.length} artworks shown.`;store();ScrollTrigger.refresh();return true;
+      status.textContent=page>=pages?'You’ve seen all the works in this collection.':`${grid.children.length} images shown.`;store();ScrollTrigger.refresh();return true;
     }catch{status.textContent='Unable to load artworks. Please try again.';return false;}
     finally{busy=false;grid.removeAttribute('aria-busy');button?.removeAttribute('aria-disabled');}
   }
@@ -63,16 +78,23 @@ if(grid){
 }
 document.querySelectorAll('[data-back-collection]').forEach(a=>a.addEventListener('click',()=>{try{sessionStorage.setItem('aa-restore:'+new URL(a.href).pathname,'1')}catch{}}));
 
-// Small hero-only field, paused off-screen or when hidden. Mobile uses fewer particles.
-const canvas=document.querySelector('#ambient-canvas');
-if(canvas){
-  const ctx=canvas.getContext('2d');let frame=0;let visible=false;let width=0,height=0,dots=[];let pointer={x:0,y:0};
-  const fine=matchMedia('(pointer:fine)').matches;
-  const resize=()=>{const box=canvas.parentElement.getBoundingClientRect();width=box.width;height=box.height;const dpr=Math.min(devicePixelRatio,1.5);canvas.width=width*dpr;canvas.height=height*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);dots=Array.from({length:fine?32:10},()=>({x:Math.random()*width,y:Math.random()*height,r:Math.random()*1.4+.5}));};
-  const draw=()=>{frame=0;if(!visible||document.hidden||reduced.matches)return;ctx.clearRect(0,0,width,height);ctx.fillStyle='rgba(190,158,255,.35)';for(const d of dots){d.y-=.12;if(d.y<0)d.y=height;ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fill();}if(fine&&pointer.x){const glow=ctx.createRadialGradient(pointer.x,pointer.y,0,pointer.x,pointer.y,180);glow.addColorStop(0,'rgba(154,107,255,.15)');glow.addColorStop(1,'rgba(154,107,255,0)');ctx.fillStyle=glow;ctx.fillRect(pointer.x-180,pointer.y-180,360,360);}frame=requestAnimationFrame(draw);};
-  const start=()=>{if(frame)cancelAnimationFrame(frame);frame=0;if(reduced.matches)ctx.clearRect(0,0,width,height);else draw();};
-  new ResizeObserver(resize).observe(canvas.parentElement);
-  new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;start();}).observe(canvas);
-  canvas.parentElement.addEventListener('pointermove',e=>{if(fine){const box=canvas.getBoundingClientRect();pointer={x:e.clientX-box.left,y:e.clientY-box.top}}});
-  document.addEventListener('visibilitychange',start);reduced.addEventListener('change',start);resize();
+document.querySelectorAll('.collection-card').forEach(a=>a.addEventListener('click',()=>{try{sessionStorage.setItem('aa-home-scroll',JSON.stringify({path:location.pathname,y:scrollY}));}catch{}}));
+document.querySelector('[data-back-home]')?.addEventListener('click',()=>{try{sessionStorage.setItem('aa-home-restore','1')}catch{}});
+if(document.querySelector('.hero')){
+  (async()=>{try{
+    if(!sessionStorage.getItem('aa-home-restore'))return;
+    sessionStorage.removeItem('aa-home-restore');const saved=JSON.parse(sessionStorage.getItem('aa-home-scroll')||'null');
+    if(saved?.path!==location.pathname)return;
+    // Font swap changes the intro's line breaks. Restore only after its layout
+    // settles, otherwise browser scroll anchoring moves the saved position.
+    await document.fonts.ready;
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    if(lenis)lenis.scrollTo(saved.y,{immediate:true});else scrollTo(0,saved.y);
+  }catch{}})();
 }
+
+// Match the source's whole-hero pointer target without stealing link clicks.
+document.querySelector('.hero')?.addEventListener('click',e=>{
+  if(e.target.closest('a,button')||getSelection()?.toString())return;
+  const target=document.querySelector('#about');if(lenis)lenis.scrollTo(target);else target?.scrollIntoView({behavior:reduced.matches?'instant':'smooth'});
+});

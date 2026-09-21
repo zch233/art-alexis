@@ -2,9 +2,24 @@
 defined('ABSPATH') || exit;
 function aa_valid_image($id){return $id>0 && get_post_type($id)==='attachment' && in_array(get_post_mime_type($id),['image/jpeg','image/png','image/webp'],true);}
 add_filter('upload_mimes',function($mimes){if(current_user_can('aa_manage_content')&&!current_user_can('manage_options'))return ['jpg|jpeg|jpe'=>'image/jpeg','png'=>'image/png','webp'=>'image/webp'];return $mimes;});
+function aa_is_installer_upload($file){
+    global $pagenow;
+    // Let the core installer validate packages; never relax media/sideload rules.
+    if(current_filter()!=='wp_handle_upload_prefilter'||!is_admin()||$pagenow!=='update.php'||($_SERVER['REQUEST_METHOD']??'')!=='POST')return false;
+    $action=$_REQUEST['action']??'';
+    if($action==='upload-theme'){$field='themezip';$cap='upload_themes';$nonce_action='theme-upload';}
+    elseif($action==='upload-plugin'){$field='pluginzip';$cap='upload_plugins';$nonce_action='plugin-upload';}
+    else return false;
+    $nonce=$_REQUEST['_wpnonce']??'';
+    if(!current_user_can($cap)||!is_string($nonce)||!wp_verify_nonce($nonce,$nonce_action))return false;
+    $tmp=$file['tmp_name']??'';$name=$file['name']??'';
+    return is_string($tmp)&&$tmp!==''&&$tmp===($_FILES[$field]['tmp_name']??null)
+        &&is_string($name)&&strtolower(pathinfo($name,PATHINFO_EXTENSION))==='zip';
+}
 function aa_check_upload($file){
     if(!current_user_can('aa_manage_content'))return $file;
     if(!empty($file['error']))return $file;
+    if(aa_is_installer_upload($file))return $file;
     if(($file['size']??0)>15*1024*1024){$file['error']='单张图片不能超过15MB。';return $file;}
     $size=@getimagesize($file['tmp_name']);
     if(!$size||!in_array($size['mime']??'',['image/jpeg','image/png','image/webp'],true)){$file['error']='仅支持真实的 JPG、PNG、静态 WebP 图片。';return $file;}

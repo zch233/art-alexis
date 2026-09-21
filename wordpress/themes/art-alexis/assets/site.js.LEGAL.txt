@@ -51,3 +51,23 @@ photoswipe/dist/photoswipe.esm.js:
     * PhotoSwipe 5.4.4 - https://photoswipe.com
     * (c) 2024 Dmytro Semenov
     */
+
+gsap/utils/paths.js:
+  /*!
+   * paths 3.15.0
+   * https://gsap.com
+   *
+   * Copyright 2008-2026, GreenSock. All rights reserved.
+   * Subject to the terms at https://gsap.com/standard-license
+   * @author: Jack Doyle, jack@greensock.com
+  */
+
+gsap/CustomEase.js:
+  /*!
+   * CustomEase 3.15.0
+   * https://gsap.com
+   *
+   * @license Copyright 2008-2026, GreenSock. All rights reserved.
+   * Subject to the terms at https://gsap.com/standard-license
+   * @author: Jack Doyle, jack@greensock.com
+  */

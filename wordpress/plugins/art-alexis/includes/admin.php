@@ -23,6 +23,7 @@ function aa_edit_box($post){
     }else{
         echo '<p><label><input type="checkbox" name="aa_home" value="1" '.checked(aa_meta($post->ID,'home','1'),'1',false).'> 展示在首页</label></p><p><label><input type="checkbox" name="aa_hidden" value="1" '.checked(aa_meta($post->ID,'hidden'),'1',false).'> 隐藏分类及其作品网页（保留内容）</label></p>';
         aa_field('阶段标注（可选，例如 Age 6–12）','aa_age',aa_meta($post->ID,'age'));
+        aa_field('详情页标注（可选；留空沿用阶段标注）','aa_detail_meta',aa_meta($post->ID,'detail_meta'));
     }
     aa_field('简介（纯文字，可换行）','aa_summary',aa_meta($post->ID,'summary'),'textarea');
     aa_field('排序（数字越小越靠前）','aa_order',$post->menu_order,'number','step="1"');
@@ -46,7 +47,7 @@ add_action('save_post',function($id,$post){
     if(!in_array($post->post_type,['aa_artwork','aa_collection'],true)||wp_is_post_revision($id)||wp_is_post_autosave($id))return;
     if(!isset($_POST['aa_nonce'])||!wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['aa_nonce'])),'aa_save')||!current_user_can('edit_post',$id))return;
     $source=wp_unslash($_POST);
-    foreach(['summary','age'] as $key)update_post_meta($id,'_aa_'.$key,sanitize_textarea_field($source['aa_'.$key]??''));
+    foreach(['summary','age','detail_meta'] as $key)update_post_meta($id,'_aa_'.$key,sanitize_textarea_field($source['aa_'.$key]??''));
     foreach(['focus_x','focus_y'] as $key)update_post_meta($id,'_aa_'.$key,max(0,min(100,(int)($source['aa_'.$key]??50))));
     $cover=absint($source['aa_cover']??0);if(aa_valid_image($cover))set_post_thumbnail($id,$cover);else delete_post_thumbnail($id);
     if($post->post_type==='aa_collection'){

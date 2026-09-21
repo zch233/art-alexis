@@ -9,7 +9,8 @@ const php=new PHP(await loadNodeRuntime('8.2',{emscriptenOptions:{processId:proc
 try{
  for(const kind of ['plugin','theme']){
   php.writeFile('/tmp/package.zip',await readFile(join(resolve(directory),`art-alexis-${kind}.zip`)));
-  const required=kind==='theme'?['style.css','index.php','functions.php','assets/site.css','assets/site.js']:['art-alexis.php','includes/model.php','includes/admin.php','includes/import.php','includes/media.php','includes/preview.php'];
+  const required=kind==='theme'?['style.css','index.php','functions.php','detail.php','assets/site.css','assets/site.js','assets/gasoek.ttf','assets/poppins.ttf','assets/poppins-500.ttf','assets/poppins-600.ttf','assets/poppins-700.ttf']:['art-alexis.php','includes/model.php','includes/admin.php','includes/import.php','includes/media.php','includes/preview.php'];
+  if(kind==='theme')required.push(...['gasoek','poppins','poppins-500','poppins-600','poppins-700'].map(name=>'assets/'+name+'.woff2'));
   const result=await php.run({code:`<?php
    $zip = new ZipArchive();
    if ($zip->open('/tmp/package.zip') !== true) throw new Exception('ZIP open failed');
