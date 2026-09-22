@@ -36,14 +36,22 @@ mm.add('(prefers-reduced-motion: no-preference)',()=>{
 
 // Keep the client's original line paths, not PhotoSwipe's filled toolbar icons.
 const sourceIcon=(path,width=1.8)=>`<svg class="pswp__icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${path}"/></svg>`;
+const galleryRoot=document.querySelector('#art-gallery');
+const galleryNavigation=galleryRoot?.dataset.navigation!=='off';
+galleryRoot?.addEventListener('click',e=>{const link=e.target.closest('a.image-button');if(link&&!e.ctrlKey&&!e.metaKey&&!e.shiftKey&&!e.altKey)link.focus({preventScroll:true});},true);
 const lightbox=new PhotoSwipeLightbox({gallery:'#art-gallery',children:'a.image-button',pswpModule:PhotoSwipe,mainClass:'source-lightbox',showHideAnimationType:'none',bgOpacity:.95,loop:true,returnFocus:true,zoom:false,counter:false,closeSVG:sourceIcon('M5 5 L19 19 M19 5 L5 19',1.6),arrowPrevSVG:sourceIcon('M15 5 L8 12 L15 19'),arrowNextSVG:sourceIcon('M9 5 L16 12 L9 19'),initialZoomLevel:z=>Math.min(1,z.fit),secondaryZoomLevel:2,maxZoomLevel:4,paddingFn:(viewport,item)=>{const pad=viewport.x<=600?20:48;const extra=item.element?.dataset.grid==='1'?80:0;return{top:pad+extra,bottom:pad+extra,left:pad,right:pad};},closeTitle:'Close image',zoomTitle:'Zoom',arrowPrevTitle:'Previous work',arrowNextTitle:'Next work'});
+if(!galleryNavigation){
+  lightbox.options.gallery=undefined;lightbox.options.children=undefined;
+  galleryRoot?.addEventListener('click',e=>{const link=e.target.closest('a.image-button');if(!link||e.button||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey)return;e.preventDefault();lightbox.loadAndOpen(0,{gallery:link});});
+}
 lightbox.on('uiRegister',()=>lightbox.pswp.ui.registerElement({name:'caption',order:9,isButton:false,appendTo:'root',onInit:(el,pswp)=>{
   const update=()=>{
     const data=pswp.currSlide?.data.element?.dataset||{};const grid=data.grid==='1';pswp.element.classList.toggle('has-info',grid);el.replaceChildren();
+    pswp.element.classList.toggle('has-navigation',galleryNavigation&&pswp.getNumItems()>1);
     if(!grid){el.textContent=data.caption||'';return;}
     const title=document.createElement('div');title.className='lightbox-info-title';title.textContent=data.title||'';
     const desc=document.createElement('p');desc.className='lightbox-info-desc';desc.textContent=data.description||'';
-    const count=document.createElement('div');count.className='lightbox-counter';count.textContent=`${pswp.currIndex+1} / ${pswp.getNumItems()}`;
+    const count=document.createElement('div');count.className='lightbox-counter';count.textContent=galleryNavigation?`${String(pswp.currIndex+1).padStart(2,'0')} / ${String(pswp.getNumItems()).padStart(2,'0')}`:'';
     el.append(title,desc,count);
   };pswp.on('change',update);update();
 }}));

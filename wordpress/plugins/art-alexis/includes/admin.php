@@ -24,6 +24,13 @@ function aa_edit_box($post){
         echo '<p><label><input type="checkbox" name="aa_home" value="1" '.checked(aa_meta($post->ID,'home','1'),'1',false).'> 展示在首页</label></p><p><label><input type="checkbox" name="aa_hidden" value="1" '.checked(aa_meta($post->ID,'hidden'),'1',false).'> 隐藏分类及其作品网页（保留内容）</label></p>';
         aa_field('阶段标注（可选，例如 Age 6–12）','aa_age',aa_meta($post->ID,'age'));
         aa_field('详情页标注（可选；留空沿用阶段标注）','aa_detail_meta',aa_meta($post->ID,'detail_meta'));
+        $display=aa_collection_display($post->ID);
+        foreach(['layout'=>['详情图片布局',['single'=>'单列大图','double'=>'双列瀑布流（手机自动单列）']], 'lightbox_navigation'=>['大图左右切换',['on'=>'开启：箭头、键盘及手机滑动','off'=>'关闭：每张图片独立查看']]] as $key=>$field){
+            $value=$display[$key==='layout'?'layout':'navigation'];
+            echo '<p><label for="aa_'.esc_attr($key).'"><strong>'.esc_html($field[0]).'</strong></label><br><select id="aa_'.esc_attr($key).'" name="aa_'.esc_attr($key).'">';
+            foreach($field[1] as $option=>$label)echo '<option value="'.esc_attr($option).'" '.selected($value,$option,false).'>'.esc_html($label).'</option>';
+            echo '</select></p>';
+        }
     }
     aa_field('简介（纯文字，可换行）','aa_summary',aa_meta($post->ID,'summary'),'textarea');
     aa_field('排序（数字越小越靠前）','aa_order',$post->menu_order,'number','step="1"');
@@ -51,6 +58,9 @@ add_action('save_post',function($id,$post){
     foreach(['focus_x','focus_y'] as $key)update_post_meta($id,'_aa_'.$key,max(0,min(100,(int)($source['aa_'.$key]??50))));
     $cover=absint($source['aa_cover']??0);if(aa_valid_image($cover))set_post_thumbnail($id,$cover);else delete_post_thumbnail($id);
     if($post->post_type==='aa_collection'){
+        foreach(['layout'=>['single','double'],'lightbox_navigation'=>['on','off']] as $key=>$allowed){
+            if(isset($source['aa_'.$key])&&in_array($source['aa_'.$key],$allowed,true))update_post_meta($id,'_aa_'.$key,$source['aa_'.$key]);
+        }
         foreach(['hidden','home'] as $key)update_post_meta($id,'_aa_'.$key,empty($source['aa_'.$key])?'0':'1');
     }else{
         $collection=absint($source['aa_collection']??0);
@@ -98,8 +108,21 @@ foreach(['aa_artwork','aa_collection'] as $type){
     add_action('manage_'.$type.'_posts_custom_column',function($col,$id){if($col==='aa_cover')echo get_the_post_thumbnail($id,[60,60]);if($col==='aa_order')echo (int)get_post($id)->menu_order;if($col==='aa_state')echo esc_html(get_post_type($id)==='aa_artwork'?get_the_title((int)aa_meta($id,'collection',0)):(aa_meta($id,'hidden')==='1'?'隐藏':'公开').(aa_meta($id,'home')==='1'?' / 首页':''));},10,2);
 }
 add_filter('post_row_actions',function($actions,$post){if(in_array($post->post_type,['aa_artwork','aa_collection'],true))unset($actions['inline hide-if-no-js']);return $actions;},10,2);
+function aa_admin_collection_filter(){
+    $raw=$_GET['aa_filter_collection']??'';
+    if($raw===''||$raw==='0')return 0;
+    if(!is_scalar($raw))return -1;
+    return filter_var($raw,FILTER_VALIDATE_INT,['options'=>['min_range'=>1]])?:-1;
+}
 add_action('restrict_manage_posts',function($type){if($type!=='aa_artwork')return;
-    echo '<label class="screen-reader-text" for="aa-filter">按作品分类筛选</label><select id="aa-filter" name="aa_collection"><option value="">全部作品分类</option>';
-    foreach(get_posts(['post_type'=>'aa_collection','post_status'=>['publish','draft','private','trash'],'numberposts'=>-1]) as $c)echo '<option value="'.(int)$c->ID.'" '.selected(absint($_GET['aa_collection']??0),$c->ID,false).'>'.esc_html($c->post_title.($c->post_status==='trash'?'（回收站）':'')).'</option>';echo '</select>';
+    // Do not use aa_collection: WordPress treats that public query var as a slug.
+    echo '<label class="screen-reader-text" for="aa-filter">按作品分类筛选</label><select id="aa-filter" name="aa_filter_collection"><option value="">全部作品分类</option>';
+    foreach(get_posts(['post_type'=>'aa_collection','post_status'=>['publish','draft','private','pending','future','trash'],'numberposts'=>-1]) as $c)echo '<option value="'.(int)$c->ID.'" '.selected(aa_admin_collection_filter(),$c->ID,false).'>'.esc_html($c->post_title.($c->post_status==='trash'?'（回收站）':'')).'</option>';echo '</select>';
 });
-add_action('pre_get_posts',function($q){if(is_admin()&&$q->is_main_query()&&$q->get('post_type')==='aa_artwork'&&!empty($_GET['aa_collection'])){$q->set('meta_key','_aa_collection');$q->set('meta_value',absint($_GET['aa_collection']));}});
+add_action('pre_get_posts',function($q){
+    if(!is_admin()||!$q->is_main_query()||($GLOBALS['pagenow']??'')!=='edit.php'||$q->get('post_type')!=='aa_artwork')return;
+    $id=aa_admin_collection_filter();if(!$id)return;
+    $clause=['key'=>'_aa_collection','value'=>$id,'compare'=>'='];
+    $existing=$q->get('meta_query');
+    $q->set('meta_query',$existing?['relation'=>'AND',$existing,$clause]:[$clause]);
+});

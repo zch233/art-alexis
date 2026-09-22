@@ -9,7 +9,7 @@
 .source-lightbox .lightbox-info-title{font:600 18px/normal Poppins,sans-serif;letter-spacing:.04em}
 .source-lightbox .lightbox-info-desc{margin:9px auto 0;max-width:560px;font:400 12px/1.6 Poppins,sans-serif;letter-spacing:.14em;text-transform:uppercase;opacity:.62}
 .source-lightbox .lightbox-counter{margin-top:12px;font:400 12px/normal Poppins,sans-serif;letter-spacing:.22em;opacity:.5}
-.source-lightbox:not(.has-info) .pswp__button--arrow{display:none}
+.source-lightbox:not(.has-navigation) .pswp__button--arrow{display:none}
 .source-lightbox .pswp__button--arrow{top:50%;margin:0;transform:translateY(-50%);width:52px;height:52px;border:1px solid #fcfbfa;background:#190e3099;opacity:1;transition:background-color .3s ease}
 .source-lightbox .pswp__button--arrow:hover{background:#2e1b57}
 .source-lightbox .pswp__button--arrow--prev{left:28px}.source-lightbox .pswp__button--arrow--next{right:28px}

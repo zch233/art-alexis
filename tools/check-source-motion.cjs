@@ -25,11 +25,11 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
    await p.goto('http://127.0.0.1:9401/collection/'+slug+'/',{waitUntil:'networkidle'});
    await p.locator('.image-button').first().click();await p.waitForSelector('.pswp--ui-visible');
    const grid=slug==='current-works';assert.equal(await p.locator('.pswp.has-info').count(),grid?1:0);
-   if(grid){assert(await p.locator('.lightbox-info-title').textContent());assert.match(await p.locator('.lightbox-counter').textContent(),/^1 \/ \d+$/);assert(await p.locator('.pswp__button--arrow--next').isVisible());assert(await p.locator('.pswp__button--arrow--next').evaluate(e=>{const a=e.getBoundingClientRect(),b=e.querySelector('svg').getBoundingClientRect();return b.top>=a.top&&b.bottom<=a.bottom&&getComputedStyle(e.querySelector('path')).stroke!=='none'}));await p.locator('.pswp__button--arrow--next').click();assert.match(await p.locator('.lightbox-counter').textContent(),/^2 \/ \d+$/);await p.locator('.pswp__button--arrow--prev').click();}
+   if(grid){assert(await p.locator('.lightbox-info-title').textContent());assert.match(await p.locator('.lightbox-counter').textContent(),/^01 \/ \d+$/);assert(await p.locator('.pswp__button--arrow--next').isVisible());assert(await p.locator('.pswp__button--arrow--next').evaluate(e=>{const a=e.getBoundingClientRect(),b=e.querySelector('svg').getBoundingClientRect();return b.top>=a.top&&b.bottom<=a.bottom&&getComputedStyle(e.querySelector('path')).stroke!=='none'}));await p.locator('.pswp__button--arrow--next').click();assert.match(await p.locator('.lightbox-counter').textContent(),/^02 \/ \d+$/);await p.locator('.pswp__button--arrow--prev').click();}
    else assert(!await p.locator('.pswp__button--arrow--next').isVisible());
    const close=await p.locator('.pswp__button--close').boundingBox();assert(Math.abs(close.x-(width-74))<2&&close.y===26,JSON.stringify({width,close}));
    await p.screenshot({path:path.join(dir,`${slug}-lightbox-${width}.png`)});
-   await p.keyboard.press('Escape');assert(await p.locator('.image-button').first().evaluate(e=>e===document.activeElement));checks.push(`${slug} source lightbox ${width}`);
+   await p.keyboard.press('Escape');await p.waitForTimeout(200);assert(await p.locator('.image-button').first().evaluate(e=>e===document.activeElement));checks.push(`${slug} source lightbox ${width}`);
   }await p.close();
  }}finally{await browser.close()}fs.writeFileSync(path.join(dir,'result.json'),JSON.stringify({checks,passed:true},null,2));console.log(JSON.stringify({dir,checks,passed:true}));
 })().catch(e=>{console.error(e);process.exitCode=1});

@@ -18,7 +18,7 @@ const base='http://127.0.0.1:9401';
   }
   const p=await browser.newPage({viewport:{width:390,height:900},reducedMotion:'reduce'});const route=base+'/collection/early-explorations/';const original=await (await p.request.get(route)).text();
   const button='<a id="load-more" class="all-work" href="?works_page=2">Load more artworks ↓</a>';
-  const first=original.replace(/data-pages="\d+"/,'data-pages="2"').replace('<p id="list-status"',button+'<p id="list-status"');
+  const first=original.replace('data-navigation="off"','data-navigation="on"').replace(/data-pages="\d+"/,'data-pages="2"').replace('<p id="list-status"',button+'<p id="list-status"');
   let fail=true;
   await p.route('**/collection/early-explorations/**',async r=>{
    const u=new URL(r.request().url());

@@ -14,9 +14,34 @@
 .collection-card:hover{background:#2e1b57;padding:20px}
 .collection-card:hover .crop>img{transform:none}
 .contact{transition:padding .2s}.contact:hover{padding-inline:50px}
+/* Source cards have inner hairlines that remain visible inside the hover inset. */
+.collection-label{border-bottom:0}
+.collection-card::before{content:'';position:absolute;inset:0;border:1px solid #fcfbfa;z-index:3;pointer-events:none}
+.collection-card:hover::after,.collection-card:focus-visible::after{content:'';position:absolute;inset:0;--card-inset:20px;background:linear-gradient(#fcfbfa,#fcfbfa) center var(--card-inset)/100% 1px,linear-gradient(#fcfbfa,#fcfbfa) center calc(100% - var(--card-inset))/100% 1px,linear-gradient(#fcfbfa,#fcfbfa) var(--card-inset) center/1px 100%,linear-gradient(#fcfbfa,#fcfbfa) calc(100% - var(--card-inset)) center/1px 100%;background-repeat:no-repeat;pointer-events:none}
+.collection-card:focus-visible{background:#2e1b57;padding:20px}
+.footer-container{border:0;border-radius:0 40px 0 40px;overflow:hidden;outline:1px solid #fcfbfa;outline-offset:-1px}
+.contact{border:0;border-bottom:1px solid #fcfbfa;border-radius:0}.contact svg{width:80px;height:80px}
+.work-card-icon-wrapper svg,.all-work svg{stroke-width:3.4}
+.contact:focus-visible{padding-inline:50px;background:#2e1b57}
+.contact small{display:inline;font-family:inherit}
+#navigation a:hover{text-decoration:none}
+.all-work{transition:padding .2s,background-color .2s}
+.all-work:hover,.all-work:focus-visible{padding-inline:50px}
+@media(max-width:767px){.contact:hover,.contact:focus-visible{padding-inline:35px}}
+@media(max-width:479px){.all-work:hover,.all-work:focus-visible{padding-inline:25px}}
+@media(max-width:479px){.collection-card:hover,.collection-card:focus-visible{padding:15px}.collection-card:hover::after,.collection-card:focus-visible::after{--card-inset:15px}}
 @keyframes source-line-left{from{transform:translateX(-100%)}to{transform:translateX(0)}}
 @keyframes source-line-right{from{transform:translateX(100%)}to{transform:translateX(0)}}
 @keyframes source-fade{from{opacity:0}to{opacity:1}}
+/* The export masks the outer rails beside the hero title and subtitle. */
+body.home::before{top:max(100vh,500px)}
+.hero-rails{position:absolute;left:0;right:0;height:100vh;border-inline:1px solid var(--scroll-text);pointer-events:none}
+.hero-rails-top{bottom:100%;transform-origin:bottom}
+.hero-rails-bottom{top:100%;transform-origin:top}
+.hero-grid::before,.hero-grid::after{left:50%;right:auto;width:100vw;margin-left:-50vw}
+.hero-title::after{left:calc((min(1380px,100vw - 40px) - 100vw)/2);right:auto;width:100vw}
+@media(max-width:479px){.hero-title::after{left:calc((100vw - 20px - 100vw)/2)}}
+@keyframes source-rails{from{transform:scaleY(0)}to{transform:scaleY(1)}}
 @media(prefers-reduced-motion:no-preference){
  .aa-motion-ready .hero{opacity:0}
  .aa-motion-ready .home .site-header{transform:translateY(-100%)}
@@ -25,4 +50,5 @@
  .intro-playing .hero-grid::after{animation:source-line-left .5s ease .2s both}
  .intro-playing .hero-shell::before{animation:source-fade .5s ease .6s both}
  .intro-playing .hero-shell::after{animation:source-fade .5s ease .7s both}
+ .intro-playing .hero-rails{animation:source-rails .5s ease .1s both}
 }

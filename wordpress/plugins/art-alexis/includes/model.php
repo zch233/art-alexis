@@ -1,5 +1,12 @@
 <?php
 defined('ABSPATH') || exit;
+// Explicit settings win; fallback preserves existing sites without a database migration.
+function aa_collection_display($id){
+    $legacy=get_post_field('post_name',$id)==='current-works';
+    $layout=aa_meta($id,'layout');$navigation=aa_meta($id,'lightbox_navigation');
+    return ['layout'=>in_array($layout,['single','double'],true)?$layout:($legacy?'double':'single'),
+        'navigation'=>in_array($navigation,['on','off'],true)?$navigation:($legacy?'on':'off')];
+}
 function aa_register() {
     foreach (['aa_collection' => ['作品分类', '分类', 'collection', false], 'aa_artwork' => ['作品', '作品', 'artwork', true]] as $type => $data) {
         register_post_type($type, [

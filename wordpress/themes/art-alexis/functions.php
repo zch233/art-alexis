@@ -8,12 +8,22 @@ add_action('wp_head',function(){
     echo '<script>if(matchMedia("(prefers-reduced-motion: no-preference)").matches){document.documentElement.classList.add("aa-motion-ready");setTimeout(function(){document.documentElement.classList.remove("aa-motion-ready")},4000)}</script>';
 },2);
 // Request the display font before the stylesheet finishes downloading.
+function alexis_asset_base(){
+    $url=get_template_directory_uri();
+    // Local aliases are the same installation, but distinct font origins to browsers.
+    if(in_array(wp_parse_url($url,PHP_URL_HOST),['127.0.0.1','localhost','::1'],true))return wp_make_link_relative($url);
+    return $url;
+}
+// WordPress normalizes relative enqueue URLs; keep loopback assets same-origin at output.
+foreach(['style_loader_src','script_loader_src'] as $hook)add_filter($hook,function($src,$handle){
+    return $handle==='aa-site'&&in_array(wp_parse_url($src,PHP_URL_HOST),['127.0.0.1','localhost','::1'],true)?wp_make_link_relative($src):$src;
+},10,2);
 add_action('wp_head',function(){
-    echo '<link rel="preload" href="'.esc_url(get_template_directory_uri().'/assets/gasoek.woff2?v=1.2.1').'" as="font" type="font/woff2" crossorigin>';
+    echo '<link rel="preload" href="'.esc_url(alexis_asset_base().'/assets/gasoek.woff2?v=1.2.1').'" as="font" type="font/woff2" crossorigin>';
 },1);
 add_filter('intermediate_image_sizes_advanced',fn($sizes)=>array_intersect_key($sizes,array_flip(['thumbnail','aa_small','aa_medium','aa_large','aa_full'])));
 add_action('wp_enqueue_scripts',function(){
-    $url=get_template_directory_uri();$dir=get_template_directory();
+    $url=alexis_asset_base();$dir=get_template_directory();
     wp_enqueue_style('aa-site',$url.'/assets/site.css',[],substr(hash_file('sha256',$dir.'/assets/site.css'),0,12));
     wp_enqueue_script('aa-site',$url.'/assets/site.js',[],substr(hash_file('sha256',$dir.'/assets/site.js'),0,12),['in_footer'=>true,'strategy'=>'defer']);
     wp_localize_script('aa-site','AA',['api'=>esc_url_raw(rest_url('art-alexis/v1/collection/'))]);
@@ -37,6 +47,7 @@ function alexis_is_detail(){return !is_404() && is_singular(['aa_collection','aa
 add_filter('body_class',function($classes){if(alexis_is_detail())$classes[]='detail-page';return $classes;});
 // Reuse the export's simple line geometry without external icon requests.
 function alexis_icon($name){
+    if($name==='contact-arrow')return '<svg viewBox="0 0 125 125" fill="none" aria-hidden="true" focusable="false"><path d="M81.5482 50.8186L36.7206 95.6462L29.3549 88.2805L74.1825 43.4529L34.6729 43.4529L34.6729 33.0378L91.9633 33.0378L91.9633 90.3281L81.5482 90.3281L81.5482 50.8186Z" fill="currentColor"/></svg>';
     $paths=['close'=>'M5 5 19 19M19 5 5 19','arrow'=>'M2 22 22 2M2 2h20v20','down'=>'M12 4v15M5 12l7 7 7-7','menu'=>'M5 7h14M5 12h14M5 17h14'];
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="'.($name==='close'?'1.6':'2').'" aria-hidden="true" focusable="false"><path d="'.$paths[$name].'"/></svg>';
 }
