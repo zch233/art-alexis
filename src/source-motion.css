@@ -25,7 +25,7 @@
 .contact:focus-visible{padding-inline:50px;background:#2e1b57}
 .contact small{display:inline;font-family:inherit}
 #navigation a:hover{text-decoration:none}
-.all-work{transition:padding .2s,background-color .2s}
+.all-work{transition:padding .2s,background-color .2s;box-shadow:inset 1px 0 #fcfbfa,inset -1px 0 #fcfbfa}
 .all-work:hover,.all-work:focus-visible{padding-inline:50px}
 @media(max-width:767px){.contact:hover,.contact:focus-visible{padding-inline:35px}}
 @media(max-width:479px){.all-work:hover,.all-work:focus-visible{padding-inline:25px}}

@@ -34,12 +34,15 @@ function aa_edit_box($post){
     }
     aa_field('简介（纯文字，可换行）','aa_summary',aa_meta($post->ID,'summary'),'textarea');
     aa_field('排序（数字越小越靠前）','aa_order',$post->menu_order,'number','step="1"');
-    echo '<h3>封面</h3>';aa_media_picker('aa_cover',get_post_thumbnail_id($post),'选择封面');
-    echo '<p>封面焦点：调整预览中的裁切位置，不修改原图。</p>';
+    echo '<h3>'.($is_art?'作品图片':'封面').'</h3>';aa_media_picker('aa_cover',get_post_thumbnail_id($post),$is_art?'选择作品图片':'选择封面');
+    echo '<p>'.($is_art?'图片焦点':'封面焦点').'：调整预览中的裁切位置，不修改原图。</p>';
     aa_field('水平焦点 0–100','aa_focus_x',aa_meta($post->ID,'focus_x',50),'range','min="0" max="100"');
     aa_field('垂直焦点 0–100','aa_focus_y',aa_meta($post->ID,'focus_y',50),'range','min="0" max="100"');
     if($is_art){
+        // Temporarily hide the editor, but retain its payload for save and preview.
+        echo '<div hidden id="aa-gallery-editor">';
         echo '<h3>作品图集</h3><p>拖动调整顺序，或使用上移/下移。支持静态 JPG、PNG、WebP，单张最多15MB，每批最多20张。</p><p><button type="button" class="button aa-gallery-select">从媒体库添加</button> <label class="button" for="aa-files">上传新图片</label><input id="aa-files" type="file" accept="image/jpeg,image/png,image/webp" multiple></p><div id="aa-upload-status" role="status" aria-live="polite"></div><ul id="aa-gallery"></ul><input type="hidden" id="aa-gallery-value" name="aa_gallery" value="'.esc_attr(wp_json_encode(aa_meta($post->ID,'gallery',[]))).'">';
+        echo '</div>';
     }
 }
 add_filter('wp_insert_post_data',function($data,$postarr){
@@ -82,6 +85,8 @@ add_action('admin_menu',function(){
     add_menu_page('网站内容','网站内容','aa_manage_content','aa-site','aa_settings_page','dashicons-admin-site-alt3',30);
     if(current_user_can('aa_manage_content')&&!current_user_can('manage_options'))foreach(['index.php','edit.php','edit.php?post_type=page','edit-comments.php','tools.php','themes.php','plugins.php','options-general.php'] as $menu)remove_menu_page($menu);
 });
+// Keep WordPress's menu registration for capability routing; hide only the duplicate shortcut.
+add_action('admin_head',function(){echo '<style>#adminmenu a[href="post-new.php?post_type=aa_artwork"]{display:none}</style>';});
 add_filter('login_redirect',function($redirect,$requested,$user){return $user instanceof WP_User && user_can($user,'aa_manage_content')&&!user_can($user,'manage_options')?admin_url('edit.php?post_type=aa_artwork'):$redirect;},10,3);
 add_filter('show_admin_bar',fn($show)=>is_admin()?$show:false);
 add_action('admin_init',function(){
@@ -104,7 +109,7 @@ function aa_settings_page(){
     echo '</div>';
 }
 foreach(['aa_artwork','aa_collection'] as $type){
-    add_filter('manage_'.$type.'_posts_columns',function($cols){$cols['aa_cover']='封面';$cols['aa_order']='排序';$cols['aa_state']='分类 / 展示';return $cols;});
+    add_filter('manage_'.$type.'_posts_columns',function($cols)use($type){$cols['aa_cover']=$type==='aa_artwork'?'作品图片':'封面';$cols['aa_order']='排序';$cols['aa_state']='分类 / 展示';return $cols;});
     add_action('manage_'.$type.'_posts_custom_column',function($col,$id){if($col==='aa_cover')echo get_the_post_thumbnail($id,[60,60]);if($col==='aa_order')echo (int)get_post($id)->menu_order;if($col==='aa_state')echo esc_html(get_post_type($id)==='aa_artwork'?get_the_title((int)aa_meta($id,'collection',0)):(aa_meta($id,'hidden')==='1'?'隐藏':'公开').(aa_meta($id,'home')==='1'?' / 首页':''));},10,2);
 }
 add_filter('post_row_actions',function($actions,$post){if(in_array($post->post_type,['aa_artwork','aa_collection'],true))unset($actions['inline hide-if-no-js']);return $actions;},10,2);
