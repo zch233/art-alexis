@@ -2,8 +2,9 @@ const {chromium}=require('C:/Users/gupo/.cache/codex-runtimes/codex-primary-runt
 const fs=require('node:fs'),assert=require('node:assert/strict'),path=require('node:path');
 (async()=>{const env=Object.fromEntries(fs.readFileSync('work/docker.env','utf8').trim().split(/\r?\n/).map(s=>{const i=s.indexOf('=');return[s.slice(0,i),s.slice(i+1)]}));const b=await chromium.launch({channel:'msedge'});const base='http://127.0.0.1:9401',dir=path.resolve('work/admin-simplify-'+Date.now());fs.mkdirSync(dir,{recursive:true});
 try{const p=await b.newPage();await p.goto(base+'/wp-login.php');await p.locator('#user_login').fill('alexis');await p.locator('#user_pass').fill(env.AA_EDITOR_PASSWORD);await p.locator('#wp-submit').click();await p.waitForURL('**/edit.php?post_type=aa_artwork');
-assert(!await p.locator('#adminmenu a[href="post-new.php?post_type=aa_artwork"]').isVisible());assert(await p.locator('.page-title-action').isVisible(),(await p.locator('body').innerText()).slice(0,1200));
+assert(!await p.locator('#adminmenu a[href="post-new.php?post_type=aa_artwork"]').isVisible());assert(await p.locator('.page-title-action').first().isVisible(),(await p.locator('body').innerText()).slice(0,1200));
 assert.equal((await p.locator('th#aa_cover').textContent()).trim(),'作品图片');
+await p.goto(base+'/wp-admin/edit.php?post_type=aa_artwork&post_status=publish');
 await p.locator('#the-list .row-title').first().click();await p.locator('#aa-gallery-value').waitFor({state:'attached'});assert(!await p.locator('#aa-gallery-editor').isVisible());assert(await p.getByRole('button',{name:'选择作品图片',exact:true}).isVisible());
 const before=await p.locator('#aa-gallery-value').inputValue();assert(JSON.parse(before).length>0);await p.screenshot({path:path.join(dir,'artwork-editor.png'),fullPage:true});
 await Promise.all([p.waitForNavigation(),p.locator('#publish').click()]);assert.deepEqual(JSON.parse(await p.locator('#aa-gallery-value').inputValue()),JSON.parse(before));

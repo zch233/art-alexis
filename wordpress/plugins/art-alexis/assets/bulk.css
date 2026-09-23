@@ -1,0 +1,10 @@
+#aa-bulk-form [hidden]{display:none!important}
+#aa-bulk-items{max-width:1080px;margin-left:0;list-style:none}
+#aa-bulk-items li{display:grid;grid-template-columns:80px minmax(160px,1fr) minmax(120px,180px) minmax(120px,1fr) auto;gap:8px 16px;align-items:center;border-bottom:1px solid #c3c4c7;padding-block:16px}
+#aa-bulk-items img{grid-row:span 2}
+#aa-bulk-items label{grid-column:2/-1;overflow-wrap:anywhere}
+#aa-bulk-items input{width:100%;min-width:0}
+#aa-bulk-items progress{width:100%}
+#aa-bulk-items span{overflow-wrap:anywhere}
+#aa-bulk-form .aa-next-batch{margin-inline:8px}
+@media(max-width:782px){#aa-bulk-items li{grid-template-columns:64px minmax(0,1fr)}#aa-bulk-items img{width:64px;height:64px}#aa-bulk-items label{grid-column:2}#aa-bulk-items input{grid-column:2}#aa-bulk-items progress,#aa-bulk-items span,#aa-bulk-items button{grid-column:2}}
